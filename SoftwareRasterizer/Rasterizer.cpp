@@ -749,6 +749,7 @@ void Rasterizer::rasterize(const Occluder& occluder)
     __m256 edgeNormalsY2 = _mm256_sub_ps(x2, x3);
     __m256 edgeNormalsY3 = _mm256_sub_ps(x3, x0);
 
+    //Edge Function = signed area of parallelogram 
     __m256 area0 = _mm256_fmsub_ps(edgeNormalsX0, edgeNormalsY1, _mm256_mul_ps(edgeNormalsX1, edgeNormalsY0));
     __m256 area1 = _mm256_fmsub_ps(edgeNormalsX1, edgeNormalsY2, _mm256_mul_ps(edgeNormalsX2, edgeNormalsY1));
     __m256 area2 = _mm256_fmsub_ps(edgeNormalsX2, edgeNormalsY3, _mm256_mul_ps(edgeNormalsX3, edgeNormalsY2));
@@ -961,6 +962,7 @@ void Rasterizer::rasterize(const Occluder& occluder)
     _mm_storeu_si128(reinterpret_cast<__m128i*>(depthBounds), packedDepthBounds);
 
     // Compute screen space depth plane
+    //取大的三角形
     __m256 greaterArea = _mm256_cmp_ps(_mm256_andnot_ps(minusZero256, area0), _mm256_andnot_ps(minusZero256, area2), _CMP_LT_OQ);
 
     // Force triangle area to be picked in the relevant mode.
@@ -968,7 +970,7 @@ void Rasterizer::rasterize(const Occluder& occluder)
     __m256 modeTriangle1 = _mm256_castsi256_ps(_mm256_cmpeq_epi32(modes, _mm256_set1_epi32(Triangle1)));
     greaterArea = _mm256_andnot_ps(modeTriangle0, _mm256_or_ps(modeTriangle1, greaterArea));
 
-
+    //大的三角形面积倒数
     __m256 invArea;
     if (possiblyNearClipped)
     {
@@ -989,6 +991,8 @@ void Rasterizer::rasterize(const Occluder& occluder)
     __m256 edgeNormalsX4 = _mm256_sub_ps(y0, y2);
     __m256 edgeNormalsY4 = _mm256_sub_ps(x2, x0);
 
+    //edge function = area -> 重心插值求深度
+    //后面的算法就跟Intel soc很像了，除了需要处理mask组合方式
     __m256 depthPlane0, depthPlane1, depthPlane2;
     depthPlane1 = _mm256_mul_ps(invArea, _mm256_blendv_ps(_mm256_fmsub_ps(z20, edgeNormalsX1, _mm256_mul_ps(z12, edgeNormalsX4)), _mm256_fnmadd_ps(z20, edgeNormalsX3, _mm256_mul_ps(z30, edgeNormalsX4)), greaterArea));
     depthPlane2 = _mm256_mul_ps(invArea, _mm256_blendv_ps(_mm256_fmsub_ps(z20, edgeNormalsY1, _mm256_mul_ps(z12, edgeNormalsY4)), _mm256_fnmadd_ps(z20, edgeNormalsY3, _mm256_mul_ps(z30, edgeNormalsY4)), greaterArea));
