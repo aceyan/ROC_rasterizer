@@ -223,7 +223,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
     int fps = int(1000.0f / avgRasterTime);
 
     std::wstringstream title;
-    title << L"FPS: " << fps << std::setprecision(3) << L"      Rasterization time: " << avgRasterTime << "±" << stDev << "ms stddev / " << median << "ms median";
+    title << L"FPS: " << fps << std::setprecision(3) << L"      Rasterization time: " << avgRasterTime << " " << stDev << "ms stddev " << median << "ms median";
     SetWindowText(hWnd, title.str().c_str());
 
     g_rasterizer->readBackDepth(&*g_rawData.begin());

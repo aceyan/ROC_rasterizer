@@ -24,3 +24,5 @@
 *.sc
 *.trace
 *.vspx
+/.vs
+/x64
